@@ -1,9 +1,15 @@
 <script setup>
-import TheWelcome from "@/components/TheWelcome.vue";
+import WorkInProgress from "../components/WorkInProgress.vue";
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <WorkInProgress />
   </main>
 </template>
+
+<style>
+main {
+  height: 100%;
+}
+</style>
