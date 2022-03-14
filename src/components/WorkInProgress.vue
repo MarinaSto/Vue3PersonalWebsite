@@ -1,5 +1,57 @@
 <script setup>
 import { onMounted } from "vue";
+function rndCol() {
+  var c = Math.floor(Math.random() * 360);
+  return `hsla(${c},40%,60%,0.5`;
+}
+
+function rng(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+class Circle {
+  constructor(
+    cx,
+    cy,
+    r,
+    color,
+    shadowColor,
+    shadowBlur = 80,
+    shadowOffset = 2
+  ) {
+    this.cx = cx;
+    this.cy = cy;
+    this.r = r;
+    this.shadowBlur = shadowBlur;
+    this.shadowOffset = shadowOffset;
+    this.color = color;
+    this.shadowColor = shadowColor;
+  }
+  draw(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.cx, this.cy, this.r, 0, Math.PI * 2, true);
+    ctx.shadowBlur = this.shadowBlur;
+    ctx.shadowOffsetX = this.shadowOffset;
+    ctx.shadowOffsetY = this.shadowOffset;
+    ctx.shadowColor = this.shadowColor;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fill();
+  }
+  move(dx, dy) {
+    this.cx += dx;
+    this.cy += dy;
+  }
+  scale(scalingFactor) {
+    this.r *= scalingFactor;
+  }
+  static generateRandom(minX, maxX, minY, maxY, minR, maxR) {
+    let x = rng(minX, maxX);
+    let y = rng(minY, maxY);
+    let r = rng(minR, maxR);
+    return new Circle(x, y, r, rndCol(), rndCol());
+  }
+}
+
 onMounted(() => {
   window.requestAnimFrame = (function () {
     return (
@@ -14,7 +66,7 @@ onMounted(() => {
     );
   })();
   var c = document.getElementById("lightsCanvas");
-  var $ = c.getContext("2d");
+  var ctx = c.getContext("2d");
   var w = (c.width = window.innerWidth);
   var h = (c.height = window.innerHeight);
   var _w = w * 0.5;
@@ -41,47 +93,28 @@ onMounted(() => {
   anim();
 
   function draw() {
-    var splot = {
-      x: rng(_w - 900, _w + 900),
-      y: rng(_h - 900, _h + 900),
-      r: rng(20, 80),
-      spX: rng(-1, 1),
-      spY: rng(-1, 1),
-    };
+    var splot = Circle.generateRandom(
+      -_w * 0.5,
+      2.5 * _w,
+      -_h * 0.5,
+      2.5 * _h,
+      20,
+      80
+    );
 
     arr.push(splot);
     while (arr.length > 100) {
       arr.shift();
     }
-    $.clearRect(0, 0, w, h);
+    ctx.clearRect(0, 0, w, h);
 
     for (var i = 0; i < arr.length; i++) {
       splot = arr[i];
-      $.fillStyle = rndCol();
-      $.beginPath();
-      $.arc(splot.x, splot.y, splot.r, 0, Math.PI * 2, true);
-      $.shadowBlur = 80;
-      $.shadowOffsetX = 2;
-      $.shadowOffsetY = 2;
-      $.shadowColor = rndCol();
-      $.globalCompositeOperation = "lighter";
-      $.fill();
+      splot.draw(ctx);
 
-      splot.x = splot.x + splot.spX;
-      splot.y = splot.y + splot.spY;
-      splot.r = splot.r * 0.96;
+      splot.move(rng(-1, 1), rng(-1, 1));
+      splot.scale(0.96);
     }
-  }
-
-  function rndCol() {
-    var r = Math.floor(Math.random() * 180);
-    var g = Math.floor(Math.random() * 60);
-    var b = Math.floor(Math.random() * 100);
-    return "rgb(" + r + "," + g + "," + b + ")";
-  }
-
-  function rng(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 });
 </script>
