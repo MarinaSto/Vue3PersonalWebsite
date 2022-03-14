@@ -120,26 +120,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div id="workInProgress">
-    <div>
-      <img
-        alt="Vue logo"
-        class="logo"
-        src="/logo.png"
-        width="225"
-        height="225"
-      />
-      <span>arina</span>
-    </div>
+  <div id="lightingCanvas">
     <canvas id="lightsCanvas"></canvas>
   </div>
 </template>
 
 <style scoped>
-#lightsCanvas {
-  z-index: 1;
-}
-#workInProgress {
+#lightingCanvas {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -159,20 +146,11 @@ onMounted(() => {
     hsla(0, 5%, 5%, 1)
   );
 }
-#workInProgress div {
-  z-index: 10;
-}
 div {
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-}
-div span {
-  color: #96ab40;
-  font-size: 6em;
-  text-shadow: 1px 1px hsla(0, 0%, 5%, 1), -1px -1px hsla(0, 0%, 5%, 1);
-  letter-spacing: 6px;
 }
 </style>
