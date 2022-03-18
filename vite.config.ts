@@ -6,17 +6,17 @@ import vue from "@vitejs/plugin-vue";
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    port: "8080",
+    port: 8080,
   },
   plugins: [vue()],
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: "jsdom",
     coverage: {
-      reporter: ['text', 'json', 'html']
-    }
+      reporter: ["text", "json", "html"],
+    },
   },
-    resolve: {
+  resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },

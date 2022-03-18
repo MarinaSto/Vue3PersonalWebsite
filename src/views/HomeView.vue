@@ -1,5 +1,5 @@
-<script setup>
-import LightingCanvas from "../components/LightingCanvas.vue";
+<script setup lang="ts">
+import LightingCanvas from "@/components/LightingCanvas.vue";
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted } from "vue";
-import { rng, randomColorHsla } from "@/helper.js";
+import { rng, randomColorHsla } from "@/helper.ts";
 
 class Circle {
   constructor(
