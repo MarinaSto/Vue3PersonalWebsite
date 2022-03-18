@@ -9,7 +9,14 @@ export default defineConfig({
     port: "8080",
   },
   plugins: [vue()],
-  resolve: {
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    coverage: {
+      reporter: ['text', 'json', 'html']
+    }
+  },
+    resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },

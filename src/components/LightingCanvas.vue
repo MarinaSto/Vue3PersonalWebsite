@@ -1,13 +1,7 @@
 <script setup>
 import { onMounted } from "vue";
-function rndCol() {
-  var c = Math.floor(Math.random() * 360);
-  return `hsla(${c},40%,60%,0.5`;
-}
+import { rng, randomColorHsla } from "@/helper.js";
 
-function rng(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 class Circle {
   constructor(
     cx,
@@ -48,7 +42,7 @@ class Circle {
     let x = rng(minX, maxX);
     let y = rng(minY, maxY);
     let r = rng(minR, maxR);
-    return new Circle(x, y, r, rndCol(), rndCol());
+    return new Circle(x, y, r, randomColorHsla(), randomColorHsla());
   }
 }
 

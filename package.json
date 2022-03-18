@@ -5,10 +5,12 @@
     "dev": "vite",
     "build": "vite build --base=/personal-website/",
     "preview": "vite preview --port 5050",
-    "test:unit": "vitest --environment jsdom",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
-    "lint:fix": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore --fix"
-  },
+    "lint:fix": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore --fix",
+    "test": "vitest",
+    "coverage": "vitest --coverage",
+    "test:ui": "vitest --ui"
+   },
   "dependencies": {
     "vue": "^3.2.31",
     "vue-router": "^4.0.12"
@@ -16,8 +18,10 @@
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.0",
     "@vitejs/plugin-vue": "^2.2.2",
+    "@vitest/ui": "^0.6.0",
     "@vue/eslint-config-prettier": "^7.0.0",
     "@vue/test-utils": "^2.0.0-rc.18",
+    "c8": "^7.11.0",
     "eslint": "^8.5.0",
     "eslint-plugin-vue": "^8.2.0",
     "jsdom": "^19.0.0",
