@@ -1,14 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted } from "vue";
-import { rng, randomColorHsla } from "@/helper.js";
+import { rng, randomColorHsla } from "@/helper";
 
 class Circle {
+  cx: number;
+  cy: number;
+  r: number;
+  shadowBlur: number;
+  shadowOffset: number;
+  color: string;
+  shadowColor: string;
   constructor(
-    cx,
-    cy,
-    r,
-    color,
-    shadowColor,
+    cx: number,
+    cy: number,
+    r: number,
+    color: string,
+    shadowColor: string,
     shadowBlur = 80,
     shadowOffset = 2
   ) {
@@ -20,7 +27,7 @@ class Circle {
     this.color = color;
     this.shadowColor = shadowColor;
   }
-  draw(ctx) {
+  draw(ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.cx, this.cy, this.r, 0, Math.PI * 2, true);
@@ -31,41 +38,48 @@ class Circle {
     ctx.globalCompositeOperation = "lighter";
     ctx.fill();
   }
-  move(dx, dy) {
+  move(dx: number, dy: number) {
     this.cx += dx;
     this.cy += dy;
   }
-  scale(scalingFactor) {
+  scale(scalingFactor: number) {
     this.r *= scalingFactor;
   }
-  static generateRandom(minX, maxX, minY, maxY, minR, maxR) {
+  static generateRandom(
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
+    minR: number,
+    maxR: number
+  ): Circle {
     let x = rng(minX, maxX);
     let y = rng(minY, maxY);
     let r = rng(minR, maxR);
-    return new Circle(x, y, r, randomColorHsla(), randomColorHsla());
+    return new Circle(x, y, r, randomColorHsla(80, 70, 0.6), randomColorHsla());
   }
 }
 
 onMounted(() => {
-  window.requestAnimFrame = (function () {
+  (window as any).requestAnimFrame = (function () {
     return (
       window.requestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||
-      window.mozRequestAnimationFrame ||
-      window.oRequestAnimationFrame ||
-      window.msRequestAnimationFrame ||
-      function (callback) {
+      (window as any).webkitRequestAnimationFrame ||
+      (window as any).mozRequestAnimationFrame ||
+      (window as any).oRequestAnimationFrame ||
+      (window as any).msRequestAnimationFrame ||
+      function (callback: () => void) {
         window.setTimeout(callback, 1000 / 60);
       }
     );
   })();
-  var c = document.getElementById("lightsCanvas");
-  var ctx = c.getContext("2d");
+  var c = document.getElementById("lightsCanvas") as HTMLCanvasElement;
+  var ctx = c.getContext("2d") as CanvasRenderingContext2D;
   var w = (c.width = window.innerWidth);
   var h = (c.height = window.innerHeight);
   var _w = w * 0.5;
   var _h = h * 0.5;
-  var arr = [];
+  var arr: Array<Circle> = [];
   var cnt = 0;
 
   window.addEventListener("load", resize);
@@ -82,7 +96,7 @@ onMounted(() => {
   function anim() {
     cnt++;
     if (cnt % 6) draw();
-    window.requestAnimFrame(anim);
+    (window as any).requestAnimFrame(anim);
   }
   anim();
 
