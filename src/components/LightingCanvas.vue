@@ -27,7 +27,7 @@ class Circle {
     this.color = color;
     this.shadowColor = shadowColor;
   }
-  draw(ctx: any) {
+  draw(ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.cx, this.cy, this.r, 0, Math.PI * 2, true);
@@ -61,20 +61,20 @@ class Circle {
 }
 
 onMounted(() => {
-  window.requestAnimFrame = (function () {
+  (window as any).requestAnimFrame = (function () {
     return (
       window.requestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||
-      window.mozRequestAnimationFrame ||
-      window.oRequestAnimationFrame ||
-      window.msRequestAnimationFrame ||
-      function (callback) {
+      (window as any).webkitRequestAnimationFrame ||
+      (window as any).mozRequestAnimationFrame ||
+      (window as any).oRequestAnimationFrame ||
+      (window as any).msRequestAnimationFrame ||
+      function (callback: TimerHandler) {
         window.setTimeout(callback, 1000 / 60);
       }
     );
   })();
-  var c = document.getElementById("lightsCanvas");
-  var ctx = c.getContext("2d");
+  var c = <HTMLCanvasElement>document.getElementById("lightsCanvas");
+  var ctx = <CanvasRenderingContext2D>c.getContext("2d");
   var w = (c.width = window.innerWidth);
   var h = (c.height = window.innerHeight);
   var _w = w * 0.5;
@@ -96,7 +96,7 @@ onMounted(() => {
   function anim() {
     cnt++;
     if (cnt % 6) draw();
-    window.requestAnimFrame(anim);
+    (window as any).requestAnimFrame(anim);
   }
   anim();
 
