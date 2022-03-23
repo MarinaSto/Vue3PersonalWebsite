@@ -68,13 +68,13 @@ onMounted(() => {
       (window as any).mozRequestAnimationFrame ||
       (window as any).oRequestAnimationFrame ||
       (window as any).msRequestAnimationFrame ||
-      function (callback: TimerHandler) {
+      function (callback: () => void) {
         window.setTimeout(callback, 1000 / 60);
       }
     );
   })();
-  var c = <HTMLCanvasElement>document.getElementById("lightsCanvas");
-  var ctx = <CanvasRenderingContext2D>c.getContext("2d");
+  var c = document.getElementById("lightsCanvas") as HTMLCanvasElement;
+  var ctx = c.getContext("2d") as CanvasRenderingContext2D;
   var w = (c.width = window.innerWidth);
   var h = (c.height = window.innerHeight);
   var _w = w * 0.5;
