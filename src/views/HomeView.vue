@@ -1,37 +1,51 @@
 <script setup lang="ts"></script>
 
 <template>
-  <main>
-    <div class="">
-      <q-parallax :height="550">
-        <template v-slot:media>
-          <video
-            style="object-fit: cover; opacity: 0.3"
-            height="440"
-            autoplay
-            loop
-            muted
-          >
-            <source type="video/webm" src="@/assets/backgroundVideo.mp4" />
-            <source type="video/mp4" src="@/assets/backgroundVideo.mp4" />
-          </video>
-        </template>
-        <transition
-          appear
-          enter-active-class="animated fadeIn"
-          :duration="1000"
-        >
-          <img
-            alt="Anicinbici logo"
-            class="logo"
-            src="/logo.png"
-            width="225"
-            height="225"
-          />
-        </transition>
-      </q-parallax>
-    </div>
-  </main>
+  <q-layout view="hHh lpR fFf">
+    <q-header class="bg-primary text-white" style="opacity=.8">
+      <q-toolbar :scroll-offset="250" :offset="[0, 0]">
+        <q-toolbar-title>
+          <q-avatar>
+            <img src="/logo.png" />
+          </q-avatar>
+          Amicinbici
+        </q-toolbar-title>
+      </q-toolbar>
+    </q-header>
+
+    <q-page-container>
+      <video
+        style="
+          position: fixed;
+          left: 0;
+          top: 0;
+          width: 100vw;
+          height: 100vh;
+          object-fit: cover;
+          opacity: 0.8;
+        "
+        autoplay
+        loop
+        muted
+      >
+        <source type="video/webm" src="@/assets/backgroundVideo.mp4" />
+        <source type="video/mp4" src="@/assets/backgroundVideo.mp4" />
+      </video>
+
+      <q-footer elevated class="bg-grey-8 text-white">
+        <q-toolbar>
+          <q-toolbar-title>
+            <q-avatar>
+              <img
+                src="https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg"
+              />
+            </q-avatar>
+            <div>Title</div>
+          </q-toolbar-title>
+        </q-toolbar>
+      </q-footer>
+    </q-page-container>
+  </q-layout>
 </template>
 
 <style></style>
