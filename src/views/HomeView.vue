@@ -1,4 +1,24 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { getSeasons, Season, Episode } from "../firebase";
+import { ref } from "vue";
+const seasons = ref<Season[]>([]);
+const episodes = ref<Record<string, Episode[]>>({});
+getSeasons().then((res) => {
+  res.forEach((r) => {
+    episodes.value[r.id] = [];
+    seasons.value.push(r);
+    r.getEpisodes().then((data) => {
+      episodes.value[r.id] = data;
+      episodes.value[r.id].sort((lhs, rhs) => {
+        return lhs.episodeNumber - rhs.episodeNumber;
+      });
+    });
+  });
+  seasons.value.sort((lhs, rhs) => {
+    return lhs.seasonNumber - rhs.seasonNumber;
+  });
+});
+</script>
 
 <template>
   <q-layout view="hHh lpR fFf">
@@ -40,7 +60,12 @@
                 src="https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg"
               />
             </q-avatar>
-            <div>Title</div>
+            <div v-for="season in seasons" :key="season.id">
+              Season {{ season.seasonNumber }}
+              <div v-for="episode in episodes[season.id]" :key="episode.id">
+                Episode {{ episode.episodeNumber }} -> {{ episode.videoUrl }}
+              </div>
+            </div>
           </q-toolbar-title>
         </q-toolbar>
       </q-footer>
