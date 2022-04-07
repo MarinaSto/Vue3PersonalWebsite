@@ -3,7 +3,24 @@ import { RouterView } from "vue-router";
 </script>
 
 <template>
-  <RouterView />
+  <q-layout view="hHh lpR fFf">
+    <q-header class="bg-primary text-white" style="opacity=.8">
+      <q-toolbar :scroll-offset="250" :offset="[0, 0]">
+        <q-toolbar-title>
+          <router-link :to="{ name: 'home' }">
+            <q-avatar>
+              <img src="/logo.png" />
+            </q-avatar>
+          </router-link>
+          Amicinbici
+        </q-toolbar-title>
+      </q-toolbar>
+    </q-header>
+
+    <q-page-container>
+      <RouterView />
+    </q-page-container>
+  </q-layout>
 </template>
 
 <style>
