@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { getSeasons, Season, Episode } from "../firebase";
 import { ref } from "vue";
+import { Season, Episode } from "../firebase";
+
 const seasons = ref<Season[]>([]);
 const episodes = ref<Record<string, Episode[]>>({});
-getSeasons().then((res) => {
+Season.getFromDb(true).then((res) => {
   res.forEach((r) => {
+    r.activateRealtimeUpdate();
     episodes.value[r.id] = [];
     seasons.value.push(r);
     r.getEpisodes().then((data) => {
@@ -22,17 +24,6 @@ getSeasons().then((res) => {
 
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header class="bg-primary text-white" style="opacity=.8">
-      <q-toolbar :scroll-offset="250" :offset="[0, 0]">
-        <q-toolbar-title>
-          <q-avatar>
-            <img src="/logo.png" />
-          </q-avatar>
-          Amicinbici
-        </q-toolbar-title>
-      </q-toolbar>
-    </q-header>
-
     <q-page-container>
       <video
         style="
@@ -63,7 +54,14 @@ getSeasons().then((res) => {
             <div v-for="season in seasons" :key="season.id">
               Season {{ season.seasonNumber }}
               <div v-for="episode in episodes[season.id]" :key="episode.id">
-                Episode {{ episode.episodeNumber }} -> {{ episode.videoUrl }}
+                <q-btn
+                  :to="{
+                    name: 'episode',
+                    params: { id: episode.id },
+                  }"
+                  >Episode {{ episode.episodeNumber }}</q-btn
+                >
+                -> {{ episode.videoUrl }}
               </div>
             </div>
           </q-toolbar-title>
