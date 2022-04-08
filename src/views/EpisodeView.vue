@@ -46,7 +46,7 @@ Season.getByNumber(getSeasonNumber()).then((res) => {
 
 <template>
   <q-ajax-bar />
-  <q-page padding v-if="season">
+  <q-page padding v-if="season && episode">
     <div class="q-pa-md">
       <div class="row">
         <div class="col-4 q-pr-sm" style="position: relative">

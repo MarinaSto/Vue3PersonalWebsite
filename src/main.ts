@@ -18,15 +18,15 @@ const app = createApp(App);
 app.use(router);
 app.use(Quasar, {
   plugins: {
-    LoadingBar
+    LoadingBar,
   },
   config: {
     loadingBar: {
-      color: 'primary',
-      size: '10px',
-      position: 'bottom'
-    }
-  }
+      color: "primary",
+      size: "10px",
+      position: "bottom",
+    },
+  },
 });
 
 app.mount("#app");
