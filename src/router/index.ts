@@ -11,7 +11,7 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: "/episode/:id",
+      path: "/season:season/episode:episode",
       name: "episode",
       component: EpisodeView,
     },

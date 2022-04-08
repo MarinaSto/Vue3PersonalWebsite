@@ -1,5 +1,5 @@
 import { createApp } from "vue";
-import { Quasar } from "quasar";
+import { Quasar, LoadingBar } from "quasar";
 import App from "./App.vue";
 import router from "./router";
 
@@ -17,7 +17,16 @@ const app = createApp(App);
 
 app.use(router);
 app.use(Quasar, {
-  plugins: {}, // import Quasar plugins and add here
+  plugins: {
+    LoadingBar
+  },
+  config: {
+    loadingBar: {
+      color: 'primary',
+      size: '10px',
+      position: 'bottom'
+    }
+  }
 });
 
 app.mount("#app");

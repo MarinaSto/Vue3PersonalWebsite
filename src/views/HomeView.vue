@@ -57,7 +57,10 @@ Season.getFromDb(true).then((res) => {
                 <q-btn
                   :to="{
                     name: 'episode',
-                    params: { id: episode.id },
+                    params: {
+                      episode: episode.episodeNumber,
+                      season: season.seasonNumber,
+                    },
                   }"
                   >Episode {{ episode.episodeNumber }}</q-btn
                 >

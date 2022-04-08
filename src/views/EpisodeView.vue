@@ -1,22 +1,52 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { Season, Episode } from "../firebase";
+import { useRoute } from "vue-router";
+import { useQuasar } from "quasar";
+function getEpisodeNumber(): number {
+  console.assert(
+    typeof route.params.episode === "string",
+    "Expected single episode, got multiple."
+  );
+  return parseInt(
+    Array.isArray(route.params.episode)
+      ? route.params.episode[0]
+      : route.params.episode
+  );
+}
+function getSeasonNumber(): number {
+  console.assert(
+    typeof route.params.season === "string",
+    "Expected single season, got multiple."
+  );
+  return parseInt(
+    Array.isArray(route.params.season)
+      ? route.params.season[0]
+      : route.params.season
+  );
+}
 
+const $q = useQuasar();
+$q.loadingBar.start();
+const route = useRoute();
 const season = ref<Season | undefined>(undefined);
 const episode = ref<Episode | undefined>(undefined);
-Season.getByNumber(2).then((res) => {
+
+Season.getByNumber(getSeasonNumber()).then((res) => {
   season.value = res;
   if (!res) {
     return;
   }
-  res.getEpisodeByNumber(2).then((resEpisode) => {
+  res.getEpisodeByNumber(getEpisodeNumber()).then((resEpisode) => {
+    $q.loadingBar.stop();
     episode.value = resEpisode;
   });
 });
 </script>
 
 <template>
-  <q-page padding>
+  <q-ajax-bar />
+  <q-page padding v-if="season">
     <div class="q-pa-md">
       <div class="row">
         <div class="col-4 q-pr-sm" style="position: relative">
@@ -24,7 +54,7 @@ Season.getByNumber(2).then((res) => {
             style="width: 100%"
             src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2062&q=80"
           />
-          <q-card class="my-card">
+          <q-card class="my-card shadow-4">
             <q-img
               style="height: 150px"
               src="https://images.unsplash.com/photo-1604748954134-457791b2ce9b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8bXRifGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=500&q=60"
@@ -41,12 +71,18 @@ Season.getByNumber(2).then((res) => {
 
               <div class="row no-wrap items-center text-grey">
                 <div class="col text-h6 ellipsis">
-                  Season <span v-if="season">{{ season.seasonNumber }}</span>
-                  Ciclabile dell' Alta val di Non
+                  {{ episode.title }}
                 </div>
 
                 <div
-                  class="col-auto text-grey text-caption q-pt-md row no-wrap items-center"
+                  class="
+                    col-auto
+                    text-grey text-caption
+                    q-pt-md
+                    row
+                    no-wrap
+                    items-center
+                  "
                 >
                   <q-icon name="place" />
                   250 ft
@@ -72,25 +108,22 @@ Season.getByNumber(2).then((res) => {
 
             <q-card-section class="q-pt-none">
               <div class="text-caption text-grey">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus
-                euismod commodo tellus, a lobortis dolor elementum quis.
-                Vestibulum eget ipsum non sem scelerisque consequat. Orci varius
-                natoque penatibus et magnis dis parturient montes, nascetur
-                ridiculus mus. Fusce sit amet nisl a nibh sagittis dapibus in ac
-                metus. Pellentesque et arcu a nibh aliquam malesuada. Quisque
-                malesuada dictum nunc non semper. Curabitur ut auctor metus.
-                Vivamus tristique diam in auctor lobortis. Duis elit dui,
-                scelerisque at mi eget, placerat volutpat tortor. Curabitur
-                ligula leo, laoreet non porta id, sollicitudin in nulla. In hac
-                habitasse platea dictumst. Aenean in vulputate metus.
+                {{ episode.description }}
               </div>
             </q-card-section>
 
             <q-separator />
 
             <q-card-actions>
-              <q-btn flat round icon="event" />
-              <q-btn flat color="primary"> Reserve </q-btn>
+              <div class="text-secondary row items-center">
+                <q-btn flat>
+                  Stagione &nbsp;<span>{{ season.seasonNumber }}</span>
+                </q-btn>
+                <q-icon name="east" class="q-mr-md" />
+                <div>
+                  Episodio &nbsp;<span>{{ episode.episodeNumber }}</span>
+                </div>
+              </div>
             </q-card-actions>
           </q-card>
         </div>
