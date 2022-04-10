@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { Season, Episode } from "../firebase";
+import { computed, ref } from "vue";
+import {
+  getSeasonEpisodeByNumber,
+  getSeasonByNumber,
+} from "../api/firestoreApi";
 import { useRoute } from "vue-router";
 import { useQuasar } from "quasar";
+import type { ComputedRef } from "vue";
+import type { Episode, Season } from "../api/interfaces";
+import type { QueryDocumentSnapshot } from "firebase/firestore";
+
 function getEpisodeNumber(): number {
   console.assert(
     typeof route.params.episode === "string",
@@ -29,24 +36,37 @@ function getSeasonNumber(): number {
 const $q = useQuasar();
 $q.loadingBar.start();
 const route = useRoute();
-const season = ref<Season | undefined>(undefined);
-const episode = ref<Episode | undefined>(undefined);
-
-Season.getByNumber(getSeasonNumber()).then((res) => {
-  season.value = res;
+const seasonSnapshot = ref<QueryDocumentSnapshot<Season> | undefined>(
+  undefined
+);
+const episodeSnapshot = ref<QueryDocumentSnapshot<Episode> | undefined>(
+  undefined
+);
+getSeasonByNumber(getSeasonNumber()).then((res) => {
+  seasonSnapshot.value = res;
   if (!res) {
     return;
   }
-  res.getEpisodeByNumber(getEpisodeNumber()).then((resEpisode) => {
+  getSeasonEpisodeByNumber(res.ref, getEpisodeNumber()).then((res) => {
+    episodeSnapshot.value = res;
     $q.loadingBar.stop();
-    episode.value = resEpisode;
   });
 });
+
+const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
+  computed(() => {
+    if (!seasonSnapshot.value) return undefined;
+    if (!episodeSnapshot.value) return undefined;
+    return {
+      info: seasonSnapshot.value.data(),
+      episode: episodeSnapshot.value.data(),
+    };
+  });
 </script>
 
 <template>
   <q-ajax-bar />
-  <q-page padding v-if="season && episode">
+  <q-page padding v-if="season">
     <div class="q-pa-md">
       <div class="row">
         <div class="col-4 q-pr-sm" style="position: relative">
@@ -55,11 +75,7 @@ Season.getByNumber(getSeasonNumber()).then((res) => {
             src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2062&q=80"
           />
           <q-card class="my-card shadow-4">
-            <q-img
-              style="height: 150px"
-              src="https://images.unsplash.com/photo-1604748954134-457791b2ce9b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8bXRifGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=500&q=60"
-            />
-
+            <q-img style="height: 150px" :src="season.episode.gallery[0]" />
             <q-card-section>
               <q-btn
                 fab
@@ -71,44 +87,40 @@ Season.getByNumber(getSeasonNumber()).then((res) => {
 
               <div class="row no-wrap items-center text-grey">
                 <div class="col text-h6 ellipsis">
-                  {{ episode.title }}
+                  {{ season.episode.title }}
                 </div>
 
                 <div
-                  class="
-                    col-auto
-                    text-grey text-caption
-                    q-pt-md
-                    row
-                    no-wrap
-                    items-center
-                  "
-                >
-                  <q-icon name="place" />
-                  250 ft
-                </div>
+                  class="col-auto text-grey text-caption q-pt-md row no-wrap items-center"
+                ></div>
               </div>
               <div class="text-grey-8 row items-center">
                 <q-icon name="timer" size="18" />
                 <div class="text-caption text-weight-medium q-mr-md">
-                  02:00h
+                  {{ season.episode.duration }}s
                 </div>
                 <q-icon name="south_east" size="18" />
-                <div class="text-caption text-weight-medium q-mr-md">700 m</div>
+                <div class="text-caption text-weight-medium q-mr-md">
+                  {{ season.episode.downhill }} m
+                </div>
                 <q-icon name="north_east" size="18" />
-                <div class="text-caption text-weight-medium q-mr-md">670 m</div>
+                <div class="text-caption text-weight-medium q-mr-md">
+                  {{ season.episode.uphill }} m
+                </div>
                 <q-icon name="straighten" size="18" />
-                <div class="text-caption text-weight-medium q-mr-md">40 km</div>
+                <div class="text-caption text-weight-medium q-mr-md">
+                  {{ season.episode.distance / 1000 }} km
+                </div>
                 <q-icon name="landscape" size="18" />
                 <div class="text-caption text-weight-medium q-mr-md">
-                  1330 slm
+                  {{ season.episode.maxAltitude }} slm
                 </div>
               </div>
             </q-card-section>
 
             <q-card-section class="q-pt-none">
               <div class="text-caption text-grey">
-                {{ episode.description }}
+                {{ season.episode.description }}
               </div>
             </q-card-section>
 
@@ -117,25 +129,24 @@ Season.getByNumber(getSeasonNumber()).then((res) => {
             <q-card-actions>
               <div class="text-secondary row items-center">
                 <q-btn flat>
-                  Stagione &nbsp;<span>{{ season.seasonNumber }}</span>
+                  Stagione &nbsp;<span>{{ season.info.seasonNumber }}</span>
                 </q-btn>
                 <q-icon name="east" class="q-mr-md" />
                 <div>
-                  Episodio &nbsp;<span>{{ episode.episodeNumber }}</span>
+                  Episodio &nbsp;<span>{{ season.episode.episodeNumber }}</span>
                 </div>
               </div>
             </q-card-actions>
           </q-card>
         </div>
         <div class="col-8 q-pl-sm">
-          <q-card class="my-card" style="height: 500px" v-if="episode">
+          <q-card class="my-card" style="height: 500px">
             <iframe
               width="100%"
               height="100%"
-              :src="episode.videoUrl"
-              title="YouTube video player"
+              :src="season.episode.videoUrl"
+              :title="season.episode.title"
               frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
             ></iframe>
           </q-card>
