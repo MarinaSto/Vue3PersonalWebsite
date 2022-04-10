@@ -1,25 +1,45 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { Season, Episode } from "../firebase";
+import { ref, computed } from "vue";
+import { getEpisodes, getSeasons } from "../api/firestoreApi";
+import type { ComputedRef } from "vue";
+import type { Season, Episode } from "../api/interfaces";
+import type { QueryDocumentSnapshot } from "firebase/firestore";
 
-const seasons = ref<Season[]>([]);
-const episodes = ref<Record<string, Episode[]>>({});
-Season.getFromDb(true).then((res) => {
-  res.forEach((r) => {
-    r.activateRealtimeUpdate();
-    episodes.value[r.id] = [];
-    seasons.value.push(r);
-    r.getEpisodes().then((data) => {
-      episodes.value[r.id] = data;
-      episodes.value[r.id].sort((lhs, rhs) => {
-        return lhs.episodeNumber - rhs.episodeNumber;
-      });
+type EpisodeSeasonsBySeason = {
+  [key: string]: Array<QueryDocumentSnapshot<Episode>>;
+};
+
+const seasonSnapshots = ref<Array<QueryDocumentSnapshot<Season>>>([]);
+const episodeSnapshotsBySeason = ref<EpisodeSeasonsBySeason>({});
+getSeasons().then((result) => {
+  seasonSnapshots.value = result;
+  result.forEach((seasonSnapshot) => {
+    episodeSnapshotsBySeason.value[seasonSnapshot.id] = [];
+    getEpisodes(seasonSnapshot.ref).then((result) => {
+      episodeSnapshotsBySeason.value[seasonSnapshot.id] = result;
     });
   });
-  seasons.value.sort((lhs, rhs) => {
-    return lhs.seasonNumber - rhs.seasonNumber;
-  });
 });
+
+const seasons: ComputedRef<Array<{ info: Season; episodes: Array<Episode> }>> =
+  computed(() => {
+    if (seasonSnapshots.value.length === 0) return [];
+    const seasons: Array<{ info: Season; episodes: Array<Episode> }> = [];
+    seasonSnapshots.value.forEach((element) => {
+      try {
+        const seasonEpisodes: Array<Episode> = [];
+        const seasonEpisodeSnapshot =
+          episodeSnapshotsBySeason.value[element.id];
+        seasonEpisodeSnapshot.forEach((snapshot) => {
+          seasonEpisodes.push(snapshot.data());
+        });
+        seasons.push({ info: element.data(), episodes: seasonEpisodes });
+      } catch {
+        console.log("Season not ready");
+      }
+    });
+    return seasons;
+  });
 </script>
 
 <template>
@@ -51,15 +71,18 @@ Season.getFromDb(true).then((res) => {
                 src="https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg"
               />
             </q-avatar>
-            <div v-for="season in seasons" :key="season.id">
-              Season {{ season.seasonNumber }}
-              <div v-for="episode in episodes[season.id]" :key="episode.id">
+            <div v-for="season in seasons" :key="season.info.seasonNumber">
+              Season {{ season.info.seasonNumber }}
+              <div
+                v-for="episode in season.episodes"
+                :key="episode.episodeNumber"
+              >
                 <q-btn
                   :to="{
                     name: 'episode',
                     params: {
                       episode: episode.episodeNumber,
-                      season: season.seasonNumber,
+                      season: season.info.seasonNumber,
                     },
                   }"
                   >Episode {{ episode.episodeNumber }}</q-btn
