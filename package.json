@@ -15,12 +15,18 @@
     "http-server": "cd dist/ && python3 -m http.server"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.13.11",
     "@quasar/extras": "^1.13.3",
+    "@types/google.maps": "^3.48.5",
     "class-validator": "^0.13.2",
     "firebase": "^9.6.10",
+    "google-maps": "^4.3.3",
+    "leaflet": "^1.7.1",
+    "leaflet-plugins": "^3.4.0",
     "quasar": "^2.6.1",
     "vue": "^3.2.31",
-    "vue-router": "^4.0.12"
+    "vue-router": "^4.0.12",
+    "ymaps": "^0.2.1"
   },
   "devDependencies": {
     "@quasar/vite-plugin": "^1.0.7",

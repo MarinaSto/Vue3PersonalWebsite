@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import {
   getSeasonEpisodeByNumber,
   getSeasonByNumber,
@@ -9,7 +9,9 @@ import { useQuasar } from "quasar";
 import type { ComputedRef } from "vue";
 import type { Episode, Season } from "../api/interfaces";
 import type { QueryDocumentSnapshot } from "firebase/firestore";
-
+// import { L } from "leaflet";
+import L from "leaflet";
+import { ymaps } from "ymaps";
 function getEpisodeNumber(): number {
   console.assert(
     typeof route.params.episode === "string",
@@ -62,18 +64,59 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
       episode: episodeSnapshot.value.data(),
     };
   });
+onMounted(() => {
+  var map = L.map("map", {
+    center: [51.505, -0.09],
+    zoom: 13,
+  });
+
+  L.tileLayer(
+    "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
+    {
+      attribution:
+        'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+      maxZoom: 18,
+      id: "mapbox/streets-v11",
+      tileSize: 512,
+      zoomOffset: -1,
+      accessToken:
+        "sk.eyJ1IjoidmFsZXJpb21hIiwiYSI6ImNsMXY0cW93ZTA1Mzkza3IxYjJ5ejFpejYifQ.XYmSJ8M8UdSNWuJZjHNZ0w",
+    }
+  ).addTo(map);
+  // var circle = L.circle([51.508, -0.11], {
+  //   color: "red",
+  //   fillColor: "#f03",
+  //   fillOpacity: 0.5,
+  //   radius: 500,
+  // }).addTo(map);
+  var logoIcon = L.icon({
+    iconUrl: "../assets/logo.png",
+
+    iconSize: [38, 95], // size of the icon
+
+    iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
+  });
+  L.marker([51.5, -0.09], { icon: logoIcon }).addTo(map);
+});
+
+// function loadGeoXml(e) {
+//   ymaps.geoXml.load(e.target.value).done(function (res) {
+//     if (!this._map) {
+//       return;
+//     }
+//     onGeoXmlLoad(res, this._yandex);
+//     this._resyncView();
+//   }, this);
+// }
 </script>
 
 <template>
   <q-ajax-bar />
+  <div id="map"></div>
   <q-page padding v-if="season">
     <div class="q-pa-md">
       <div class="row">
         <div class="col-4 q-pr-sm" style="position: relative">
-          <img
-            style="width: 100%"
-            src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2062&q=80"
-          />
           <q-card class="my-card shadow-4">
             <q-img style="height: 150px" :src="season.episode.gallery[0]" />
             <q-card-section>
@@ -91,7 +134,14 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
                 </div>
 
                 <div
-                  class="col-auto text-grey text-caption q-pt-md row no-wrap items-center"
+                  class="
+                    col-auto
+                    text-grey text-caption
+                    q-pt-md
+                    row
+                    no-wrap
+                    items-center
+                  "
                 ></div>
               </div>
               <div class="text-grey-8 row items-center">
@@ -156,4 +206,8 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
   </q-page>
 </template>
 
-<style></style>
+<style>
+#map {
+  height: 180px;
+}
+</style>
