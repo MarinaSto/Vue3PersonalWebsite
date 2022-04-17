@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Map from "../components/Map.vue";
 import { computed, ref, onMounted } from "vue";
 import {
   getSeasonEpisodeByNumber,
@@ -65,54 +66,36 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
     };
   });
 onMounted(() => {
-  var map = L.map("map", {
-    center: [51.505, -0.09],
-    zoom: 13,
-  });
-
-  L.tileLayer(
-    "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
-    {
-      attribution:
-        'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-      maxZoom: 18,
-      id: "mapbox/streets-v11",
-      tileSize: 512,
-      zoomOffset: -1,
-      accessToken:
-        "sk.eyJ1IjoidmFsZXJpb21hIiwiYSI6ImNsMXY0cW93ZTA1Mzkza3IxYjJ5ejFpejYifQ.XYmSJ8M8UdSNWuJZjHNZ0w",
-    }
-  ).addTo(map);
-  // var circle = L.circle([51.508, -0.11], {
-  //   color: "red",
-  //   fillColor: "#f03",
-  //   fillOpacity: 0.5,
-  //   radius: 500,
-  // }).addTo(map);
-  var logoIcon = L.icon({
-    iconUrl: "../assets/logo.png",
-
-    iconSize: [38, 95], // size of the icon
-
-    iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
-  });
-  L.marker([51.5, -0.09], { icon: logoIcon }).addTo(map);
+  // var map = L.map("map", {
+  //   center: [46.296196, 11.164263],
+  //   zoom: 13,
+  // });
+  // const imageUrl = "../logo.png";
+  // L.tileLayer(
+  //   "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
+  //   {
+  //     attribution:
+  //       'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+  //     maxZoom: 18,
+  //     id: "mapbox/streets-v11",
+  //     tileSize: 512,
+  //     zoomOffset: -1,
+  //     accessToken:
+  //       "sk.eyJ1IjoidmFsZXJpb21hIiwiYSI6ImNsMXY0cW93ZTA1Mzkza3IxYjJ5ejFpejYifQ.XYmSJ8M8UdSNWuJZjHNZ0w",
+  //   }
+  // ).addTo(map);
+  // var logoIcon = L.icon({
+  //   iconUrl: imageUrl,
+  //   iconSize: [50, 50], // size of the icon
+  // });
+  // L.marker([46.296196, 11.164263], { icon: logoIcon }).addTo(map);
 });
-
-// function loadGeoXml(e) {
-//   ymaps.geoXml.load(e.target.value).done(function (res) {
-//     if (!this._map) {
-//       return;
-//     }
-//     onGeoXmlLoad(res, this._yandex);
-//     this._resyncView();
-//   }, this);
-// }
 </script>
 
 <template>
   <q-ajax-bar />
-  <div id="map"></div>
+  <Map />
+  <!-- <div id="map"></div> -->
   <q-page padding v-if="season">
     <div class="q-pa-md">
       <div class="row">
@@ -208,6 +191,6 @@ onMounted(() => {
 
 <style>
 #map {
-  height: 180px;
+  height: 280px;
 }
 </style>
