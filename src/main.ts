@@ -2,6 +2,7 @@ import { createApp } from "vue";
 import { Quasar, LoadingBar } from "quasar";
 import App from "./App.vue";
 import router from "./router";
+import { createPinia } from "pinia"
 
 // Import icon libraries
 import "@quasar/extras/material-icons/material-icons.css";
@@ -16,6 +17,7 @@ import "@quasar/extras/animate/bounceInDown.css";
 const app = createApp(App);
 
 app.use(router);
+app.use(createPinia());
 app.use(Quasar, {
   plugins: {
     LoadingBar,

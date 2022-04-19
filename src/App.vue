@@ -1,5 +1,14 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { RouterView } from "vue-router";
+import { firebaseAuth } from "./firebase";
+import { userStore } from "./store/user";
+import { storeToRefs } from "pinia";
+
+const storeUser = userStore();
+storeUser.initFirebaseAuth();
+const store = storeToRefs(userStore());
+const { isUserLogged, userName, userProfilePicture } = store;
 </script>
 
 <template>
@@ -14,6 +23,29 @@ import { RouterView } from "vue-router";
           </router-link>
           Amicinbici
         </q-toolbar-title>
+        <q-btn
+          v-if="!isUserLogged"
+          color="secondary"
+          label="sign-in"
+          @click="storeUser.signIn()"
+        />
+        <template v-else>
+          <p>{{ userName }}</p>
+          <q-avatar>
+            <img :src="userProfilePicture" />
+            <q-menu touch-position>
+              <q-list style="min-width: 100px">
+                <q-item
+                  clickable
+                  v-close-popup
+                  @click="storeUser.signOutUser()"
+                >
+                  <q-item-section>Sign out</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-avatar>
+        </template>
       </q-toolbar>
     </q-header>
 
