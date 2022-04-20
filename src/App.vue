@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { RouterView } from "vue-router";
-import { firebaseAuth } from "./firebase";
 import { userStore } from "./store/user";
 import { storeToRefs } from "pinia";
 
