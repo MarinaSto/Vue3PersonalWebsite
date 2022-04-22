@@ -2,7 +2,7 @@ import { createApp } from "vue";
 import { Quasar, LoadingBar } from "quasar";
 import App from "./App.vue";
 import router from "./router";
-import { createPinia } from "pinia"
+import { createPinia } from "pinia";
 
 // Import icon libraries
 import "@quasar/extras/material-icons/material-icons.css";
