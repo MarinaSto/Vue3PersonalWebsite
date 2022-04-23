@@ -1,4 +1,0 @@
-
-> tseslint@0.0.0 lint
-> eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --ignore-path .gitignore
-

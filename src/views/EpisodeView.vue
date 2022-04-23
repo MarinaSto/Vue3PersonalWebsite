@@ -3,43 +3,31 @@ import { computed, ref } from "vue";
 import {
   getSeasonEpisodeByNumber,
   getSeasonByNumber,
+  getMessagesInEpisodeQuery,
+  createMessage,
 } from "../api/firestoreApi";
 import { useRoute } from "vue-router";
 import { useQuasar } from "quasar";
 import type { ComputedRef } from "vue";
+import { Message } from "../api/interfaces";
 import type { Episode, Season } from "../api/interfaces";
 import type { QueryDocumentSnapshot } from "firebase/firestore";
+import { onSnapshot, updateDoc } from "firebase/firestore";
+import {
+  getDownloadURL,
+  getStorage,
+  ref as storegeRef,
+  uploadBytesResumable,
+} from "firebase/storage";
 import { userStore } from "../store/user";
 import { storeToRefs } from "pinia";
+import { getAuth } from "firebase/auth";
 
 const storeUser = userStore();
-storeUser.initFirebaseAuth();
-const store = storeToRefs(userStore());
-const { isUserLogged, userName, userProfilePicture, messages } = store;
 
-const textMessage = ref("");
-async function saveMsg() {
-  await storeUser.saveMessage(textMessage.value);
-  textMessage.value = "";
-}
-const fileInput = ref(null);
-function triggerInput() {
-  if (fileInput.value) (fileInput.value as HTMLInputElement).click();
-}
-async function saveImage(e: Event) {
-  const target = e.target as HTMLInputElement;
-  const file = target?.files?.[0];
-  // Check if the file is an image.
-  if (!file?.type?.match("image.*")) {
-    var data = {
-      message: "You can only share images",
-      timeout: 2000,
-    };
-    console.log(data.message);
-    return;
-  }
-  await storeUser.saveImageMessage(file);
-}
+const store = storeToRefs(userStore());
+const { isUserLogged, userName, userProfilePicture } = store;
+
 function getEpisodeNumber(): number {
   console.assert(
     typeof route.params.episode === "string",
@@ -80,6 +68,8 @@ getSeasonByNumber(getSeasonNumber()).then((res) => {
   getSeasonEpisodeByNumber(res.ref, getEpisodeNumber()).then((res) => {
     episodeSnapshot.value = res;
     $q.loadingBar.stop();
+    storeUser.initFirebaseAuth();
+    loadMessages();
   });
 });
 
@@ -92,6 +82,144 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
       episode: episodeSnapshot.value.data(),
     };
   });
+
+// Messages
+const textMessage = ref("");
+const fileInput = ref(null);
+const messagesSnapshot = ref<QueryDocumentSnapshot<Message>[]>([]);
+const LOADING_IMAGE_URL = "https://www.google.com/images/spin-32.gif?a";
+const messageDescentOrder = ref(true);
+const messages: ComputedRef<Array<{ id: string; data: Message }>> = computed(
+  () => {
+    const messages: Array<{ id: string; data: Message }> = [];
+    messagesSnapshot.value?.forEach((m) => {
+      messages.push({ id: m.id, data: m.data() });
+    });
+    if (messageDescentOrder.value) {
+      messages.reverse();
+    }
+    return messages;
+  }
+);
+function loadMessages() {
+  if (!episodeSnapshot.value) {
+    throw new Error("Reference to episode is missing");
+  }
+  // Create the query to load the last 12 messages and listen for new ones.
+  const recentMessagesQuery = getMessagesInEpisodeQuery(
+    episodeSnapshot.value.ref,
+    12
+  );
+  // Start listening to the query.
+  onSnapshot(recentMessagesQuery, (snapshot) => {
+    function sortMessagesByTimestamp() {
+      messagesSnapshot.value.sort((a, b) => {
+        const time_a = a.data()?.timestamp?.getTime() || Infinity;
+        const time_b = b.data()?.timestamp?.getTime() || Infinity;
+        return time_a - time_b;
+      });
+    }
+    snapshot.docChanges().forEach((change) => {
+      if (change.type === "added") {
+        messagesSnapshot.value.push(change.doc);
+        sortMessagesByTimestamp();
+        return;
+      }
+
+      let el_idx = messagesSnapshot.value.findIndex((el) => {
+        return el.id === change.doc.id;
+      });
+      if (el_idx === -1) {
+        return;
+      }
+
+      if (change.type === "removed") {
+        messagesSnapshot.value.splice(el_idx, 1);
+        return;
+      }
+      if (change.type === "modified") {
+        const needsReorder =
+          messagesSnapshot.value[el_idx].data().timestamp !==
+          change.doc.data().timestamp;
+        messagesSnapshot.value.splice(el_idx, 1, change.doc);
+        if (needsReorder) {
+          sortMessagesByTimestamp();
+        }
+      }
+    });
+  });
+}
+async function saveMessage() {
+  if (!episodeSnapshot.value) {
+    throw new Error("Reference to episode is missing");
+  }
+  // Add a new message entry to the Firebase database.
+  console.log("episodeSnapshot.value.ref", episodeSnapshot.value.ref);
+  try {
+    await createMessage(
+      episodeSnapshot.value.ref,
+      new Message({
+        name: userName.value,
+        text: textMessage.value,
+        profilePictureUrl: userProfilePicture.value,
+      })
+    );
+  } catch (error) {
+    console.error("Error writing new message to Firebase Database", error);
+  }
+  textMessage.value = "";
+}
+
+function triggerInput() {
+  if (fileInput.value) (fileInput.value as HTMLInputElement).click();
+}
+async function saveImage(e: Event) {
+  if (!episodeSnapshot.value) {
+    throw new Error("Reference to episode is missing");
+  }
+  const target = e.target as HTMLInputElement;
+  const file = target?.files?.[0];
+  // Check if the file is an image.
+  if (!file || !file?.type?.match("image.*")) {
+    var data = {
+      message: "You can only share images",
+      timeout: 2000,
+    };
+    console.log(data.message);
+    return;
+  }
+  try {
+    // 1 - We add a message with a loading icon that will get updated with the shared image.
+    const messageRef = await createMessage(
+      episodeSnapshot.value.ref,
+      new Message({
+        name: userName.value,
+        imageUrl: LOADING_IMAGE_URL,
+        profilePictureUrl: userProfilePicture.value,
+      })
+    );
+    if (!getAuth() || !getAuth().currentUser) return;
+    // 2 - Upload the image to Cloud Storage.
+    const filePath = `${getAuth()?.currentUser?.uid}/${messageRef.id}/${
+      file?.name
+    }`;
+    const newImageRef = storegeRef(getStorage(), filePath);
+    await uploadBytesResumable(newImageRef, file);
+
+    // 3 - Generate a public URL for the file.
+    const publicImageUrl = await getDownloadURL(newImageRef);
+
+    // 4 - Update the chat message placeholder with the image's URL.
+    await updateDoc(messageRef, {
+      imageUrl: publicImageUrl,
+    });
+  } catch (error) {
+    console.error(
+      "There was an error uploading a file to Cloud Storage:",
+      error
+    );
+  }
+}
 </script>
 
 <template>
@@ -181,7 +309,7 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
             ></iframe>
           </q-card>
           <q-input
-            v-if="isUserLogged"
+            v-if="isUserLogged && episodeSnapshot"
             outlined
             bottom-slots
             v-model="textMessage"
@@ -202,7 +330,7 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
                 icon="image"
                 @click="triggerInput()"
               />
-              <q-btn @click="saveMsg()" round dense flat icon="send" />
+              <q-btn @click="saveMessage()" round dense flat icon="send" />
             </template>
           </q-input>
 
@@ -220,30 +348,32 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
               <q-item
                 clickable
                 v-ripple
-                v-for="message in storeUser.orderedMessages"
+                v-for="message in messages"
                 :key="message.id"
               >
                 <q-item-section avatar top>
                   <q-avatar>
-                    <img :src="message.profilePictureUrl" />
+                    <img :src="message.data.profilePictureUrl" />
                   </q-avatar>
                 </q-item-section>
                 <q-item-section>
                   <q-item-label lines="1"
-                    >{{ message.text
-                    }}<span v-if="message.imageUrl"
+                    >{{ message.data.text
+                    }}<span v-if="message.data.imageUrl"
                       ><img
-                        :src="message.imageUrl"
+                        :src="message.data.imageUrl"
                         fit="cover"
                         style="max-width: 300px; max-sheight: 150px" /></span
                   ></q-item-label>
                   <q-item-label caption lines="2">
-                    <span class="text-weight-bold">{{ message.name }}</span>
+                    <span class="text-weight-bold">{{
+                      message.data.name
+                    }}</span>
                   </q-item-label>
                 </q-item-section>
 
                 <q-item-section side top>
-                  {{ message.time }}
+                  {{ message.data.timestamp }}
                 </q-item-section>
               </q-item>
             </q-list>

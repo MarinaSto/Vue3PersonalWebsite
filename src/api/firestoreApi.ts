@@ -1,19 +1,24 @@
 import { firestore } from "@/firebase";
-import type {
-  DocumentData,
-  DocumentSnapshot,
-  SnapshotOptions,
+import {
+  addDoc,
+  orderBy,
+  serverTimestamp,
+  type DocumentData,
+  type DocumentSnapshot,
+  type SnapshotOptions,
 } from "@firebase/firestore";
 import {
   collection,
   CollectionReference,
   DocumentReference,
   getDocs,
+  Query,
+  limit,
   query,
   where,
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { Episode, Season } from "./interfaces";
+import { Episode, Season, Message } from "./interfaces";
 
 const seasonConverter = {
   toFirestore: (season: Season) => {
@@ -83,6 +88,54 @@ const episodeConverter = {
   },
 };
 
+const messageConverter = {
+  toFirestore: (message: Message) => {
+    if (message.timestamp) {
+      throw new Error("Concerting message with a timesstamp is not supported.");
+    }
+    const timestamp = serverTimestamp();
+    if (message.imageUrl) {
+      return {
+        name: message.name,
+        profilePictureUrl: message.profilePictureUrl,
+        timestamp: timestamp,
+        imageUrl: message.imageUrl,
+      };
+    }
+    if (message.text) {
+      return {
+        name: message.name,
+        profilePictureUrl: message.profilePictureUrl,
+        timestamp: timestamp,
+        text: message.text,
+      };
+    }
+    return {
+      name: message.name,
+      profilePictureUrl: message.profilePictureUrl,
+      timestamp: timestamp,
+    };
+  },
+  fromFirestore: (
+    snapshot: DocumentSnapshot<DocumentData>,
+    options?: SnapshotOptions
+  ) => {
+    if (!snapshot.exists()) {
+      throw new Error("Cannot find any data inside the snapshot.");
+    }
+    const data = snapshot.data(options);
+    return new Message({
+      name: data.name,
+      profilePictureUrl: data.profilePictureUrl,
+      text: data?.text,
+      imageUrl: data?.imageUrl,
+      timestamp: data.timestamp
+        ? new Date(data.timestamp.seconds * 1000)
+        : undefined,
+    });
+  },
+};
+
 function episodeCollection(
   seasonRef: DocumentReference<Season>
 ): CollectionReference<Episode> {
@@ -146,4 +199,33 @@ async function getSeasonEpisodeByNumber(
   }
   return queryEpisodesSnapshot.docs[0];
 }
-export { getSeasons, getEpisodes, getSeasonEpisodeByNumber, getSeasonByNumber };
+
+function getMessagesInEpisodeQuery(
+  episodeRef: DocumentReference<Episode>,
+  limitElement = 10,
+  desc = true
+): Query<Message> {
+  return query(
+    collection(episodeRef, "messages").withConverter(messageConverter),
+    orderBy("timestamp", desc ? "desc" : "asc"),
+    limit(limitElement)
+  );
+}
+
+async function createMessage(
+  episodeRef: DocumentReference<Episode>,
+  message: Message
+): Promise<DocumentReference<Message>> {
+  return addDoc(
+    collection(episodeRef, "messages").withConverter(messageConverter),
+    message
+  );
+}
+export {
+  getSeasons,
+  getEpisodes,
+  getSeasonEpisodeByNumber,
+  getSeasonByNumber,
+  getMessagesInEpisodeQuery,
+  createMessage,
+};
