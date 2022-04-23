@@ -9,7 +9,37 @@ import { useQuasar } from "quasar";
 import type { ComputedRef } from "vue";
 import type { Episode, Season } from "../api/interfaces";
 import type { QueryDocumentSnapshot } from "firebase/firestore";
+import { userStore } from "../store/user";
+import { storeToRefs } from "pinia";
 
+const storeUser = userStore();
+storeUser.initFirebaseAuth();
+const store = storeToRefs(userStore());
+const { isUserLogged, userName, userProfilePicture, messages } = store;
+
+const textMessage = ref("");
+async function saveMsg() {
+  await storeUser.saveMessage(textMessage.value);
+  textMessage.value = "";
+}
+const fileInput = ref(null);
+function triggerInput() {
+  if (fileInput.value) (fileInput.value as HTMLInputElement).click();
+}
+async function saveImage(e: Event) {
+  const target = e.target as HTMLInputElement;
+  const file = target?.files?.[0];
+  // Check if the file is an image.
+  if (!file?.type?.match("image.*")) {
+    var data = {
+      message: "You can only share images",
+      timeout: 2000,
+    };
+    console.log(data.message);
+    return;
+  }
+  await storeUser.saveImageMessage(file);
+}
 function getEpisodeNumber(): number {
   console.assert(
     typeof route.params.episode === "string",
@@ -150,6 +180,74 @@ const season: ComputedRef<{ info: Season; episode: Episode } | undefined> =
               allowfullscreen
             ></iframe>
           </q-card>
+          <q-input
+            v-if="isUserLogged"
+            outlined
+            bottom-slots
+            v-model="textMessage"
+            :label="`Lascia un messaggio come ${userName}`"
+            dense
+            class="q-mt-md"
+          >
+            <template v-slot:before>
+              <q-avatar>
+                <img :src="userProfilePicture" />
+              </q-avatar>
+            </template>
+            <template v-slot:after>
+              <q-btn
+                round
+                color="primary"
+                glossy
+                icon="image"
+                @click="triggerInput()"
+              />
+              <q-btn @click="saveMsg()" round dense flat icon="send" />
+            </template>
+          </q-input>
+
+          <input
+            hidden
+            class="file-input"
+            ref="fileInput"
+            type="file"
+            @change="saveImage"
+          />
+          <div class="q-pa-md q-gutter-md" v-if="messages.length > 0">
+            <q-list bordered padding class="rounded-borders">
+              <q-item-label header>Messaggi</q-item-label>
+
+              <q-item
+                clickable
+                v-ripple
+                v-for="message in storeUser.orderedMessages"
+                :key="message.id"
+              >
+                <q-item-section avatar top>
+                  <q-avatar>
+                    <img :src="message.profilePictureUrl" />
+                  </q-avatar>
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label lines="1"
+                    >{{ message.text
+                    }}<span v-if="message.imageUrl"
+                      ><img
+                        :src="message.imageUrl"
+                        fit="cover"
+                        style="max-width: 300px; max-sheight: 150px" /></span
+                  ></q-item-label>
+                  <q-item-label caption lines="2">
+                    <span class="text-weight-bold">{{ message.name }}</span>
+                  </q-item-label>
+                </q-item-section>
+
+                <q-item-section side top>
+                  {{ message.time }}
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </div>
         </div>
       </div>
     </div>
