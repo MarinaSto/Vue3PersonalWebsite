@@ -22,7 +22,20 @@ export default defineConfig({
     },
   },
   server: {
+    headers: {
+      SameSite: "Lax",
+      "Cache-Control": "max-age=0",
+    },
+    cors: true,
     port: 8080,
+    proxy: {
+      "lh3.googleusercontent.com/": {
+        target: "http://localhost:4567",
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+    },
   },
   plugins: [
     vue({

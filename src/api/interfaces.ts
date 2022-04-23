@@ -4,6 +4,7 @@ import {
   IsArray,
   IsString,
   IsUrl,
+  IsOptional,
 } from "class-validator";
 
 class GenericData {
@@ -78,5 +79,31 @@ class Season extends GenericData {
     console.log(`Constructed season #${this.seasonNumber}.`);
   }
 }
+class Message extends GenericData {
+  @IsString()
+  name!: string;
 
-export { Episode, Season };
+  @IsString()
+  profilePictureUrl!: string;
+
+  @IsString()
+  @IsOptional()
+  text: string | undefined;
+
+  @IsUrl()
+  @IsOptional()
+  imageUrl: string | undefined;
+
+  @IsOptional()
+  timestamp: Date | undefined;
+
+  constructor(data: Partial<Message>) {
+    super();
+    this.imageUrl = undefined;
+    this.timestamp = undefined;
+    this.text = undefined;
+    this.update(data);
+    console.log(`Constructed message #${this.timestamp}.`);
+  }
+}
+export { Episode, Season, Message };
