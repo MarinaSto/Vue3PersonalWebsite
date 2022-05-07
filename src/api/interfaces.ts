@@ -1,7 +1,14 @@
+/*
+ * @Author: your name
+ * @Date: 2022-04-23 23:59:57
+ * @LastEditTime: 2022-05-07 09:19:47
+ * @LastEditors: MarinaStojmenova marina.stojmenova@hotmail.it
+ * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @FilePath: /personal-website/src/api/interfaces.ts
+ */
 import {
   validateOrReject,
   IsInt,
-  IsArray,
   IsString,
   IsUrl,
   IsOptional,
@@ -31,27 +38,11 @@ class Episode extends GenericData {
   @IsString()
   description!: string;
 
-  @IsInt()
-  distance!: number;
+  gpx!: string | null;
 
-  @IsInt()
-  downhill!: number;
-
-  @IsInt()
-  duration!: number;
-
-  @IsInt()
-  maxAltitude!: number;
-
-  @IsString()
-  summary!: string;
-
-  @IsInt()
-  uphill!: number;
-
-  @IsArray()
-  @IsUrl({}, { each: true })
-  gallery!: string[];
+  // @IsArray()
+  // @IsUrl({}, { each: true })
+  // gallery!: string[];
 
   constructor(data: Partial<Episode>) {
     super();
