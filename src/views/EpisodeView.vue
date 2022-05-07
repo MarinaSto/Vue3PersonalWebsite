@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CreateEpisode from "@/components/CreateEpisode.vue";
 import { computed, ref } from "vue";
 import {
   getSeasonEpisodeByNumber,
@@ -200,9 +201,7 @@ async function saveImage(e: Event) {
     );
     if (!getAuth() || !getAuth().currentUser) return;
     // 2 - Upload the image to Cloud Storage.
-    const filePath = `${getAuth()?.currentUser?.uid}/${messageRef.id}/${
-      file?.name
-    }`;
+    const filePath = `chatImages/${messageRef.id}/${file?.name}`;
     const newImageRef = storegeRef(getStorage(), filePath);
     await uploadBytesResumable(newImageRef, file);
 
@@ -233,7 +232,7 @@ async function saveImage(e: Event) {
             src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2062&q=80"
           />
           <q-card class="my-card shadow-4">
-            <q-img style="height: 150px" :src="season.episode.gallery[0]" />
+            <!-- <q-img style="height: 150px" :src="season.episode.gallery[0]" /> -->
             <q-card-section>
               <q-btn
                 fab
@@ -254,25 +253,15 @@ async function saveImage(e: Event) {
               </div>
               <div class="text-grey-8 row items-center">
                 <q-icon name="timer" size="18" />
-                <div class="text-caption text-weight-medium q-mr-md">
-                  {{ season.episode.duration }}s
-                </div>
+                <div class="text-caption text-weight-medium q-mr-md">0s</div>
                 <q-icon name="south_east" size="18" />
-                <div class="text-caption text-weight-medium q-mr-md">
-                  {{ season.episode.downhill }} m
-                </div>
+                <div class="text-caption text-weight-medium q-mr-md">0 m</div>
                 <q-icon name="north_east" size="18" />
-                <div class="text-caption text-weight-medium q-mr-md">
-                  {{ season.episode.uphill }} m
-                </div>
+                <div class="text-caption text-weight-medium q-mr-md">0 m</div>
                 <q-icon name="straighten" size="18" />
-                <div class="text-caption text-weight-medium q-mr-md">
-                  {{ season.episode.distance / 1000 }} km
-                </div>
+                <div class="text-caption text-weight-medium q-mr-md">0 km</div>
                 <q-icon name="landscape" size="18" />
-                <div class="text-caption text-weight-medium q-mr-md">
-                  {{ season.episode.maxAltitude }} slm
-                </div>
+                <div class="text-caption text-weight-medium q-mr-md">0 slm</div>
               </div>
             </q-card-section>
 
@@ -308,6 +297,10 @@ async function saveImage(e: Event) {
               allowfullscreen
             ></iframe>
           </q-card>
+          <CreateEpisode
+            v-if="isUserLogged && episodeSnapshot"
+            :seasonRef="seasonSnapshot?.ref"
+          />
           <q-input
             v-if="isUserLogged && episodeSnapshot"
             outlined

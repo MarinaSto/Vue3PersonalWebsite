@@ -20,6 +20,13 @@ import {
 } from "firebase/firestore";
 import { Episode, Season, Message } from "./interfaces";
 
+// Get a reference to the storage service, which is used to create references in your storage bucket
+// const storage = getStorage();
+
+// Create a storage reference from our storage service
+// Create a reference to 'gpx'
+// const gpxRef = ref(storage, "gpxFiles");
+
 const seasonConverter = {
   toFirestore: (season: Season) => {
     return {
@@ -54,14 +61,9 @@ const episodeConverter = {
       episodeNumber: episode.episodeNumber,
       videoUrl: episode.videoUrl,
       description: episode.description,
-      distance: episode.distance,
-      downhill: episode.downhill,
-      duration: episode.duration,
-      maxAltitude: episode.maxAltitude,
-      summary: episode.summary,
-      uphill: episode.uphill,
-      gallery: episode.gallery,
+      gpx: episode.gpx,
     };
+    // gallery: episode.gallery,
   },
   fromFirestore: (
     snapshot: DocumentSnapshot<DocumentData>,
@@ -77,14 +79,9 @@ const episodeConverter = {
       episodeNumber: data.episodeNumber,
       videoUrl: data.videoUrl,
       description: data.description,
-      distance: data.distance,
-      downhill: data.downhill,
-      duration: data.duration,
-      maxAltitude: data.maxAltitude,
-      summary: data.summary,
-      uphill: data.uphill,
-      gallery: data.gallery,
+      gpx: data.gpx,
     });
+    // gallery: data.gallery,
   },
 };
 
@@ -221,6 +218,17 @@ async function createMessage(
     message
   );
 }
+
+async function createEpisode(
+  seasonRef: DocumentReference<Season>,
+  episode: Episode
+): Promise<DocumentReference<Episode>> {
+  return addDoc(
+    collection(seasonRef, "episodes").withConverter(episodeConverter),
+    episode
+  );
+}
+
 export {
   getSeasons,
   getEpisodes,
@@ -228,4 +236,5 @@ export {
   getSeasonByNumber,
   getMessagesInEpisodeQuery,
   createMessage,
+  createEpisode,
 };
