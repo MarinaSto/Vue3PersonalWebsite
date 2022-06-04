@@ -23,7 +23,7 @@ import {
 import { userStore } from "../store/user";
 import { storeToRefs } from "pinia";
 import { getAuth } from "firebase/auth";
-import Map from "../components/Map.vue"
+import Map from "../components/Map.vue";
 const storeUser = userStore();
 
 const store = storeToRefs(userStore());
@@ -227,7 +227,10 @@ async function saveImage(e: Event) {
     <div class="q-pa-md">
       <div class="row">
         <div class="col-4 q-pr-sm" style="position: relative">
-          <Map />
+          <Map
+            :urlGpx="season?.episode?.gpx"
+            :episodeImage="'http://drive.google.com/uc?export=view&id=1q1P-SVwIvTLJXufzUuejGnbovwnnbbrg'"
+          />
           <q-card class="my-card shadow-4">
             <!-- <q-img style="height: 150px" :src="season.episode.gallery[0]" /> -->
             <q-card-section>

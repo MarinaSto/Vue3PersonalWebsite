@@ -1,214 +1,199 @@
-<script>
+<script lang="ts">
+import { defineComponent } from "vue";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import * as L from 'leaflet'
 import "leaflet-kmz/dist/leaflet-kmz";
 import "leaflet-gpx/gpx";
-import { mapboxAccessKey } from "../mapbox";
-//import gpxVal from '../../public/tres.gpx'
-export default {
-  name: "Map",
+import "leaflet.elevation/src/L.Control.Elevation";
+
+interface gpxData {
+  type: string;
+  value: number;
+  unit: string;
+}
+// import { mapboxAccessKey } from "../mapbox";
+export default defineComponent({
+  name: "MapLeaflet",
+  props: {
+    urlGpx: {},
+    episodeImage: {},
+  },
   data() {
     return {
-      mapDiv: "",
+      mapDiv: null as L.Map | null,
       center: [40, 0],
-      currentObjectURLs: [],
       showGPXStats: false,
-      gpxStats: [],
-      imageUrl: "../logo.png",
-      gpxUrl: "/tres.gpx",
+      gpxStats: [] as gpxData[],
+      imageUrl: "../logo.png", //TODO: to be used in the map
     };
   },
   methods: {
     // Create the initial Leaflet map
     setupLeafletMap: function () {
-      this.mapDiv = L.map("map", {
+      const map = L.map("map", {
         center: [46.296196, 11.164263],
         zoom: 13,
       });
-      // .locate({setView: true})
       L.tileLayer(
-        "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         {
           attribution:
-            'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-          maxZoom: 18,
-          id: "mapbox/streets-v11",
-          tileSize: 512,
-          zoomOffset: -1,
+            "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
           accessToken:
             "sk.eyJ1IjoidmFsZXJpb21hIiwiYSI6ImNsMXY0cW93ZTA1Mzkza3IxYjJ5ejFpejYifQ.XYmSJ8M8UdSNWuJZjHNZ0w",
         }
-      ).addTo(this.mapDiv);
-      var logoIcon = L.icon({
-        iconUrl: this.imageUrl,
-        iconSize: [50, 50], // size of the icon
-      });
-      L.marker([46.296196, 11.164263], { icon: logoIcon }).addTo(this.mapDiv);
-      fetch('../../public/tres.gpx')
-  .then(response => {
-    console.log('----------------------',response)
-this.showGPXStats = true;
-          // Parse GPX files
-           let objectURL = URL.createObjectURL(response.gpx);
-          new L.GPX(objectURL, { async: true })
-            .on("loaded", (e) => {
-              let el = e.target;
-              let stats = this.gpxStats;
-              map.fitBounds(el.getBounds());
-              // Grab the total distance
-              let distance = el.get_distance_imp();
-              stats.push({
-                type: "Total Distance",
-                value: distance,
-                unit: "miles",
-              });
-              // Grab the avg speed
-              let movingSpeed = el.get_moving_speed_imp();
-              stats.push({
-                type: "Average Moving Speed",
-                value: movingSpeed,
-                unit: "mph",
-              });
-              // Grab the max speed
-              let elevLoss = el.get_elevation_loss_imp();
-              stats.push({
-                type: "Elevation Loss",
-                value: elevLoss,
-                unit: "ft",
-              });
-              // Grab the elevation gain
-              let elevGain = el.get_elevation_gain_imp();
-              stats.push({
-                type: "Elevation Gain",
-                value: elevGain,
-                unit: "ft",
-              });
-            })
+      ).addTo(map);
 
-  })
-  .then(data => {
-  	// Do something with your data
-  	console.log(data);
-  });
+      var theIcon = L.divIcon({
+        html: "<div style='background-color:#ef7305;' class='marker-pin'></div><img class='circular--square' src='http://drive.google.com/uc?export=view&id=1q1P-SVwIvTLJXufzUuejGnbovwnnbbrg' />",
+        iconSize: [113, 113],
+        iconAnchor: [96, 104], // bottom center is the anchor point
+        popupAnchor: [60, 70],
+      });
+
+      L.marker([46.296196, 11.164263], {
+        icon: theIcon,
+        riseOnHover: true,
+        draggable: false,
+        autoPan: true,
+      })
+        .addTo(map)
+        .bindTooltip(
+          `<img height="150" src="${this.episodeImage}"><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.</p>`
+        )
+        .openTooltip();
+
+      this.mapDiv = map;
+      this.loadMap();
     },
-    parseFile: function (el) {
-      // Check to see if there are any Object URLs to revoke
-      if (this.currentObjectURLs.length > 0) {
-        for (const url of this.currentObjectURLs) {
-          URL.revokeObjectURL(url);
-        }
-        this.currentObjectURLs = []; // reset the objectURLs array since we are only handling one file at the moment
-        this.gpxStats = []; // reset the GPX stats array since we are only accounting for one track right now
-      }
-      // Set some variables for use later
-      const fileList = el.files;
+    loadMap: function () {
       let map = this.mapDiv;
-      for (const file of fileList) {
-        let objectURL = URL.createObjectURL(file);
-        console.log(objectURL, file, this.gpxUrl);
-        this.currentObjectURLs.push(objectURL);
-        if (file.type === "application/gpx+xml") {
-          // Show GPX Stats
-          this.showGPXStats = true;
-          // Parse GPX files
-          new L.GPX(objectURL, { async: true })
-            .on("loaded", (e) => {
-              let el = e.target;
-              let stats = this.gpxStats;
-              map.fitBounds(el.getBounds());
-              // Grab the total distance
-              let distance = el.get_distance_imp();
-              stats.push({
-                type: "Total Distance",
-                value: distance,
-                unit: "miles",
-              });
-              // Grab the avg speed
-              let movingSpeed = el.get_moving_speed_imp();
-              stats.push({
-                type: "Average Moving Speed",
-                value: movingSpeed,
-                unit: "mph",
-              });
-              // Grab the max speed
-              let elevLoss = el.get_elevation_loss_imp();
-              stats.push({
-                type: "Elevation Loss",
-                value: elevLoss,
-                unit: "ft",
-              });
-              // Grab the elevation gain
-              let elevGain = el.get_elevation_gain_imp();
-              stats.push({
-                type: "Elevation Gain",
-                value: elevGain,
-                unit: "ft",
-              });
-            })
-            .addTo(map);
-        } else {
-          // Don't show GPX stats
-          this.showGPXStats = false;
-          // Parse KML and KMZ files
-          let kmz = L.kmzLayer().addTo(map);
-          let control = L.control
-            .layers(null, null, { collapsed: false })
-            .addTo(map);
-          kmz.on("load", (e) => {
-            control.addOverlay(e.layer, e.name);
+      // Show GPX Stats
+      this.showGPXStats = true;
+      // Parse GPX files
+      new L.GPX(this.urlGpx, {
+        async: true,
+        polyline_options: {
+          color: "#26A69A",
+        },
+        marker_options: {
+          startIconUrl: "/pin-icon-start.png",
+          endIconUrl: "/pin-icon-start.png",
+          shadowUrl: "/pin-icon-start.png",
+        },
+      })
+        .on("loaded", (e: { target: any }) => {
+          let el = e.target;
+          let stats = this.gpxStats;
+          map?.fitBounds(el.getBounds());
+
+          // Grab the total distance
+          let distance = el.get_distance_imp();
+          stats.push({
+            type: "Total Distance",
+            value: distance,
+            unit: "kilometers",
           });
-          kmz.load(objectURL);
-        }
-      }
+          // Grab the avg speed
+          let movingSpeed = el.get_moving_speed_imp();
+          stats.push({
+            type: "Average Moving Speed",
+            value: movingSpeed,
+            unit: "kph",
+          });
+          // Grab the max speed
+          let elevLoss = el.get_elevation_loss_imp();
+          stats.push({
+            type: "Elevation Loss",
+            value: elevLoss,
+            unit: "m",
+          });
+          // Grab the elevation gain
+          let elevGain = el.get_elevation_gain_imp();
+          stats.push({
+            type: "Elevation Gain",
+            value: elevGain,
+            unit: "m",
+          });
+
+          var info =
+            "Name: Amicinbici</br>" +
+            "Distance: " +
+            distance +
+            " km </br>" +
+            "Elevation Gain: " +
+            movingSpeed +
+            " m </br>" +
+            "Lat:" +
+            elevGain +
+            "</br>" +
+            "Lon:" +
+            elevGain +
+            "</br>";
+          // register popup on click
+          el.getLayers()[0].bindPopup(info);
+        })
+        .addTo(map);
     },
   },
   mounted() {
     this.setupLeafletMap();
   },
-};
+});
 </script>
 <template>
   <main>
-    <form enctype="multipart/form-data" novalidate>
-      <label for="upload"
-        >Upload Your Map
-        <input
-          id="upload"
-          type="file"
-          multiple
-          accept=".kmz, .kml, .gpx"
-          @change="parseFile($event.target)"
-      /></label>
-    </form>
     <div id="map"></div>
-    <section class="gpxStats" v-show="showGPXStats">
-      <header>
-        <h2>Track Stats</h2>
-      </header>
-      <div class="content">
-        <ul>
-          <li v-for="stat in gpxStats">
-            <span class="stat-type">{{ stat.type }}</span
-            >: {{ stat.value }} {{ stat.unit }}
-          </li>
-        </ul>
-      </div>
-    </section>
   </main>
 </template>
 <style scoped>
 #map {
   block-size: clamp(10rem, 50vh, 60rem);
 }
-label {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 1rem;
-}
 .gpxStats {
   margin-block-start: 3rem;
 }
 .stat-type {
   font-weight: bold;
+}
+
+div :deep(.marker-pin) {
+  width: 60px;
+  height: 60px;
+  border-radius: 50% 50% 50% 0;
+  background: linear-gradient(
+    166deg,
+    rgba(239, 46, 5, 1) 0%,
+    rgba(239, 115, 5, 1) 42%,
+    rgba(239, 116, 8, 1) 88%,
+    rgba(236, 141, 58, 1) 100%
+  );
+  position: absolute;
+  transform: rotate(-45deg);
+  right: -10px;
+  bottom: 18px;
+  margin: -15px 0 0 -15px;
+}
+
+div :deep(.marker-pin::after) {
+  content: "";
+  width: 50px;
+  height: 50px;
+  margin: 5px 0 0 5px;
+  background: transparent;
+  position: absolute;
+  border-radius: 50%;
+}
+
+div:deep(.circular--square) {
+  position: absolute;
+  border-radius: 50%;
+  width: 50px;
+  left: 68px;
+  top: 40px;
+}
+div:deep(.leaflet-marker-icon) {
+  background: transparent !important;
+  border: none !important;
 }
 </style>
