@@ -35,6 +35,12 @@ export default defineConfig({
         secure: false,
         ws: true,
       },
+      "firebasestorage.googleapis.com": {
+        target: "http://localhost:4568",
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
     },
   },
   plugins: [
