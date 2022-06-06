@@ -1,10 +1,9 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import "leaflet/dist/leaflet.css";
-import * as L from 'leaflet'
-import "leaflet-kmz/dist/leaflet-kmz";
+import * as L from "leaflet";
 import "leaflet-gpx/gpx";
-import "leaflet.elevation/src/L.Control.Elevation";
+import "leaflet-kmz/dist/leaflet-kmz";
 
 interface gpxData {
   type: string;
@@ -71,6 +70,8 @@ export default defineComponent({
       // Show GPX Stats
       this.showGPXStats = true;
       // Parse GPX files
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       new L.GPX(this.urlGpx, {
         async: true,
         polyline_options: {
@@ -82,7 +83,7 @@ export default defineComponent({
           shadowUrl: "/pin-icon-start.png",
         },
       })
-        .on("loaded", (e: { target: any }) => {
+        .on("loaded", (e: L.LeafletEvent) => {
           let el = e.target;
           let stats = this.gpxStats;
           map?.fitBounds(el.getBounds());
